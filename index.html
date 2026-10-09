@@ -173,7 +173,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 #nv a.on{border-bottom-color:var(--pr);box-shadow:0 10px 16px -12px var(--pr)}
 .sec{border-bottom-color:var(--pr)}
 #pb{background:linear-gradient(90deg,var(--pr),#fff)}
-#sp{background:radial-gradient(ellipse at 50% 38%,rgba(var(--pc),.3),#06030d 64%)}
+#sp{background:radial-gradient(ellipse at 50% 38%,rgba(var(--pc),.3),transparent 64%),#06030d}
 #sp .pg{background:repeating-linear-gradient(0deg,#cdbbff 0 2px,transparent 2px 10px),#8f78d8}
 #sp b{text-shadow:0 0 28px rgba(var(--pc),.85)}
 #sp img{filter:drop-shadow(0 0 22px rgba(var(--pc),.9))}
@@ -193,6 +193,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .btn{position:relative;overflow:hidden}
 .btn:not(.g):not(.d)::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);transform:translateX(-120%);pointer-events:none}
 .btn:not(:disabled):hover::after{transform:translateX(120%);transition:transform .6s}
+.fx-on #cr1,.fx-on #cr2{display:none}
+.fx-c.fx-on #cr1,.fx-c.fx-on #cr2{display:block}
+.dg i{position:relative;width:min(16vw,76px);height:min(8vw,36px);border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#fff 0 6%,#ffd25a 18%,#ff6a1f 50%,rgba(255,60,0,.05) 72%);box-shadow:0 0 30px 8px rgba(255,110,30,.5);transform:none}
+.dg i:last-child{transform:none}
+.dg i::after{content:"";position:absolute;left:50%;top:8%;width:8%;height:84%;transform:translateX(-50%);background:#140500;border-radius:50%}
+@media(max-width:560px){#sp #skp,#sp #nsh{left:20px;right:20px;text-align:center}#sp #skp{bottom:20px}#sp #nsh{bottom:74px}}
 </style>
 </head>
 <body><div id="av" hidden role="status"></div><div class="dg" id="dgx"><i></i><i></i></div>
@@ -448,7 +454,7 @@ async function cfsave(all){
  draw()
 }
 const FX=(()=>{
- const L={desligado:0,baixo:1,medio:2,alto:3},N=[0,28,64,110];
+ const L={desligado:0,baixo:1,medio:2,alto:3},N=[0,40,80,130];
  const rm=matchMedia('(prefers-reduced-motion:reduce)').matches,fine=matchMedia('(pointer:fine)').matches;
  const weak=(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=2;
  const bg=document.createElement('canvas'),ov=document.createElement('canvas'),ring=document.createElement('div'),dot=document.createElement('div');
@@ -465,7 +471,7 @@ const FX=(()=>{
   cb.setTransform(d,0,0,d,0,0);co.setTransform(d,0,0,d,0,0)
  }
  function fill(){
-  while(ps.length<N[lv])ps.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.6+.4,v:Math.random()*.25+.05,a:Math.random()*6.28,s:Math.random()*.02+.005});
+  while(ps.length<N[lv])ps.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*2+.5,v:Math.random()*.25+.05,a:Math.random()*6.28,s:Math.random()*.02+.005});
   ps.length=N[lv]
  }
  function go(){if(!raf)raf=requestAnimationFrame(tick)}
@@ -478,7 +484,9 @@ const FX=(()=>{
   for(const p of ps){
    p.y-=p.v;p.a+=p.s;
    if(p.y<-4){p.y=h+4;p.x=Math.random()*w}
-   cb.fillStyle='rgba('+rgb+','+(.25+.35*Math.sin(p.a)**2)+')';
+   const al=.3+.5*Math.sin(p.a)**2;
+   if(p.r>1.4){cb.fillStyle='rgba('+rgb+','+al*.15+')';cb.beginPath();cb.arc(p.x,p.y,p.r*4,0,6.283);cb.fill()}
+   cb.fillStyle='rgba('+rgb+','+al+')';
    cb.beginPath();cb.arc(p.x,p.y,p.r,0,6.283);cb.fill()
   }
   co.clearRect(0,0,w,h);
@@ -488,10 +496,9 @@ const FX=(()=>{
    if(q.ring){co.strokeStyle='rgba('+q.c+','+(1-k)*.8+')';co.lineWidth=2*(1-k)+.5;co.beginPath();co.arc(q.x,q.y,q.r*k,0,6.283);co.stroke()}
    else{q.x+=q.vx;q.y+=q.vy;q.vy+=q.g;co.fillStyle='rgba('+q.c+','+(1-k)+')';co.beginPath();co.arc(q.x,q.y,q.s*(1-k*.5),0,6.283);co.fill()}
   }
-  if(fine&&lv){
+  if(lv){
    cx+=(mx-cx)*.2;cy+=(my-cy)*.2;
-   ring.style.transform='translate('+cx+'px,'+cy+'px)';
-   dot.style.transform='translate('+mx+'px,'+my+'px)';
+   if(fine){ring.style.transform='translate('+cx+'px,'+cy+'px)';dot.style.transform='translate('+mx+'px,'+my+'px)'}
    R.setProperty('--mx',cx+'px');R.setProperty('--my',cy+'px')
   }
   if(lv||sp.length)go()
@@ -504,14 +511,16 @@ const FX=(()=>{
  }
  function set(n){
   const touch=matchMedia('(pointer:coarse)').matches;
-  lv=Math.min(rm?0:(L[n]??2),touch?1:weak?2:3);
+  lv=Math.min(rm?0:(L[n]??2),touch?(weak?1:2):weak?2:3);
   size();fill();
-  document.documentElement.classList.toggle('fx-on',lv>0&&fine);
+  document.documentElement.classList.toggle('fx-on',lv>0);
+  document.documentElement.classList.toggle('fx-c',lv>0&&fine);
   if(lv)go()
  }
  addEventListener('resize',size);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){last=performance.now();go()}});
  addEventListener('pointerdown',e=>{
+  mx=e.clientX;my=e.clientY;if(cx<0){cx=mx;cy=my}
   if(!lv)return;
   const t=e.target.closest&&e.target.closest('button,.btn,a,.cd');
   if(e.button===2)burst(e.clientX,e.clientY,8,'229,72,77',40);
@@ -519,6 +528,7 @@ const FX=(()=>{
   else if(t)burst(e.clientX,e.clientY,10,rgb,56);
   else burst(e.clientX,e.clientY,6,rgb,36)
  },{passive:true});
+ addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY;if(cx<0){cx=mx;cy=my}},{passive:true});
  if(fine){
   addEventListener('pointermove',e=>{
    mx=e.clientX;my=e.clientY;
